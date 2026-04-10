@@ -65,6 +65,12 @@ legend{
   font-weight:bold;
 }
 
+.helperText{
+  font-size:0.85rem;
+  color:#4a5a52;
+  margin:4px 0 10px 0;
+}
+
 .rangeRow{
   display:flex;
   gap:10px;
@@ -132,7 +138,6 @@ td.num{
   box-shadow:0 4px 12px rgba(0,0,0,.06);
 }
 
-/* Percentage inputs inside table */
 .pctInput{
   width:60px;
   text-align:right;
@@ -140,6 +145,31 @@ td.num{
   border-radius:4px;
   border:1px solid #ccc;
   font-size:0.9rem;
+}
+
+.customBox{
+  margin-top:10px;
+  padding:10px;
+  border-radius:10px;
+  border:1px dashed rgba(0,0,0,.25);
+  background:#fff;
+}
+.customRow{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.customRow input[type="number"]{
+  width:120px;
+  padding:6px 8px;
+  border-radius:6px;
+  border:1px solid #ccc;
+  font-size:1rem;
+}
+.smallNote{
+  font-size:.85rem;
+  color:#4a5a52;
+  margin:6px 0 0;
 }
 </style>
 </head>
@@ -156,51 +186,56 @@ td.num{
     <h3>About 🍕</h3>
     <p>
       This simple calculator helps you work out the ingredients needed to make
-      pizza dough based on:
-    </p>
-    <ul>
-      <li>🍕 The size of each pizza</li>
-      <li>📏 How many pizzas you want to make</li>
-      <li>💧 The dough hydration percentage</li>
-    </ul>
-    <p>
-      Adjust the sliders and options, then review the ingredients list below.
-      Press <strong>Generate</strong> (or press <strong>Enter</strong>) any time to
-      recalculate the grams and dough weights.
-      You can fine‑tune the <strong>% of flour</strong> for yeast, salt, sugar and bread improver
-      using the little arrow controls. Water % always follows the hydration slider.
+      pizza dough based on dough weight, hydration, and baker’s percentages.
     </p>
   </div>
 
-  <!-- Size options -->
+  <!-- Pizza size -->
   <fieldset>
     <legend>Pizza size 🍕</legend>
+    <div class="helperText">
+      Weights shown in brackets are the <strong>dry flour weight only</strong> (per pizza).
+    </div>
 
     <label>
-      <input type="radio" name="size" value="140" checked>
+      <input type="radio" name="size" value="140" checked onchange="updateCustomVisibility()">
       Small (Ninja) – 140g
     </label><br>
 
     <label>
-      <input type="radio" name="size" value="180">
+      <input type="radio" name="size" value="180" onchange="updateCustomVisibility()">
       Medium – 180g
     </label><br>
 
     <label>
-      <input type="radio" name="size" value="200">
+      <input type="radio" name="size" value="200" onchange="updateCustomVisibility()">
       Large (Cast Iron) – 200g
     </label><br>
 
     <label>
-      <input type="radio" name="size" value="240">
+      <input type="radio" name="size" value="240" onchange="updateCustomVisibility()">
       Extra Large – 240g
+    </label><br>
+
+    <label>
+      <input type="radio" name="size" value="custom" onchange="updateCustomVisibility()">
+      Custom – enter flour weight ✍️
     </label>
+
+    <div id="customBox" class="customBox" style="display:none;">
+      <div class="customRow">
+        <strong>Custom flour weight:</strong>
+        <input id="customSize" type="number" min="1" step="1" value="140" disabled> g
+      </div>
+      <p class="smallNote">
+        Enter the dry flour weight per pizza.
+      </p>
+    </div>
   </fieldset>
 
   <fieldset>
     <legend>Number of pizzas 🍽️</legend>
     <div class="rangeRow">
-      <!-- Default is now 1 pizza -->
       <input type="range" id="count" min="0" max="10" value="1"
         oninput="countVal.textContent=this.value">
       <span class="value" id="countVal">1</span>
@@ -216,7 +251,6 @@ td.num{
     </div>
   </fieldset>
 
-  <!-- Ingredients list ABOVE Generate button -->
   <table>
     <thead>
       <tr>
@@ -230,7 +264,6 @@ td.num{
 
   <button type="button" onclick="generate()">Generate 🍕</button>
 
-  <!-- Dough Weight section -->
   <div class="about" style="margin-top:16px;">
     <h3>Dough Weight ⚖️</h3>
     <p>
@@ -239,132 +272,74 @@ td.num{
     </p>
   </div>
 
-  <!-- Recipe section -->
   <div class="about" style="margin-top:16px;">
     <h3>Recipe 🍽️</h3>
     <p>
       Add all dry ingredients and mix thoroughly.  
       Add water then mix in a stand mixer for 10 minutes.  
       Lightly oil then cover and leave in the refrigerator overnight.  
-      Three hours beforehand, remove the dough from the fridge, divide into portions, and let rise in a warm place.
+      Three hours beforehand, remove the dough from the fridge, divide into portions and let rise in a warm place.
     </p>
   </div>
 
 </div>
 
 <script>
-function generate(){
-  var size = +document.querySelector('input[name="size"]:checked').value;
-  var pizzas = +document.getElementById('count').value;
-  var hydrationSlider = +document.getElementById('hydration').value;
+function fmt(x){ return Math.round(x * 10) / 10; }
 
-  // Base flour
-  var flour = size * pizzas;
-
-  // Percentages:
-  // Water is always hydration slider; others come from inputs (or defaults)
-  var pctWater = hydrationSlider;
-
-  var pctYeastInput    = document.getElementById('pctYeast');
-  var pctSaltInput     = document.getElementById('pctSalt');
-  var pctSugarInput    = document.getElementById('pctSugar');
-  var pctImproverInput = document.getElementById('pctImprover');
-
-  // UPDATED defaults: yeast 1.5%, improver 1%
-  var pctYeast    = pctYeastInput    ? parseFloat(pctYeastInput.value)    : 1.5;
-  var pctSalt     = pctSaltInput     ? parseFloat(pctSaltInput.value)     : 1;
-  var pctSugar    = pctSugarInput    ? parseFloat(pctSugarInput.value)    : 1;
-  var pctImprover = pctImproverInput ? parseFloat(pctImproverInput.value) : 1.0;
-
-  // Fallback if NaN
-  if (isNaN(pctYeast))    pctYeast    = 1.5;
-  if (isNaN(pctSalt))     pctSalt     = 1;
-  if (isNaN(pctSugar))    pctSugar    = 1;
-  if (isNaN(pctImprover)) pctImprover = 1.0;
-
-  // Calculate grams from percentages (baker's %)
-  var water    = flour * pctWater    / 100;
-  var yeast    = flour * pctYeast    / 100;
-  var salt     = flour * pctSalt     / 100;
-  var sugar    = flour * pctSugar    / 100;
-  var improver = flour * pctImprover / 100;
-
-  // Helper for rounding
-  function fmt(x){ return Math.round(x * 10) / 10; }
-
-  // Build table body
-  var html = "";
-  html += "<tr>" +
-            "<td>Bread flour 🌾</td>" +
-            "<td class='num'>" + fmt(flour) + " g</td>" +
-            "<td class='num'>100%</td>" +
-          "</tr>";
-
-  // Water – NOT editable; % comes from hydration slider
-  html += "<tr>" +
-            "<td>Water 💧</td>" +
-            "<td class='num'>" + fmt(water) + " g</td>" +
-            "<td class='num'>" + fmt(pctWater) + " %</td>" +
-          "</tr>";
-
-  // Yeast – editable (default 1.5%)
-  html += "<tr>" +
-            "<td>Yeast 🍞</td>" +
-            "<td class='num'>" + fmt(yeast) + " g</td>" +
-            "<td class='num'>" +
-              "<input id='pctYeast' class='pctInput' type='number' step='0.1' min='0' value='" + pctYeast + "'> %" +
-            "</td>" +
-          "</tr>";
-
-  // Salt – editable
-  html += "<tr>" +
-            "<td>Salt 🧂</td>" +
-            "<td class='num'>" + fmt(salt) + " g</td>" +
-            "<td class='num'>" +
-              "<input id='pctSalt' class='pctInput' type='number' step='0.1' min='0' value='" + pctSalt + "'> %" +
-            "</td>" +
-          "</tr>";
-
-  // Sugar – editable
-  html += "<tr>" +
-            "<td>Sugar 🍬</td>" +
-            "<td class='num'>" + fmt(sugar) + " g</td>" +
-            "<td class='num'>" +
-              "<input id='pctSugar' class='pctInput' type='number' step='0.1' min='0' value='" + pctSugar + "'> %" +
-            "</td>" +
-          "</tr>";
-
-  // Bread improver – editable (default 1%)
-  html += "<tr>" +
-            "<td>Bread improver ⚙️</td>" +
-            "<td class='num'>" + fmt(improver) + " g</td>" +
-            "<td class='num'>" +
-              "<input id='pctImprover' class='pctInput' type='number' step='0.1' min='0' value='" + pctImprover + "'> %" +
-            "</td>" +
-          "</tr>";
-
-  document.getElementById('result').innerHTML = html;
-
-  // Total wet dough weight (all ingredients)
-  var total = flour + water + yeast + salt + sugar + improver;
-  var perPizza = pizzas > 0 ? total / pizzas : 0;
-
-  total = fmt(total);
-  perPizza = fmt(perPizza);
-
-  document.getElementById('totalDough').textContent = total;
-  document.getElementById('perPizzaDough').textContent = perPizza;
+function updateCustomVisibility(){
+  var selected = document.querySelector('input[name="size"]:checked').value;
+  var isCustom = selected === "custom";
+  document.getElementById("customBox").style.display = isCustom ? "block" : "none";
+  document.getElementById("customSize").disabled = !isCustom;
 }
 
-/* ENTER triggers Generate */
-document.addEventListener("keydown", function(e){
-  if(e.key === "Enter"){
-    e.preventDefault();
-    generate();
+function getPizzaWeight(){
+  var selected = document.querySelector('input[name="size"]:checked').value;
+  if(selected === "custom"){
+    var v = +document.getElementById("customSize").value;
+    return (v > 0 && !isNaN(v)) ? v : 0;
   }
+  return +selected;
+}
+
+function generate(){
+  var flourPerPizza = getPizzaWeight();
+  var pizzas = +document.getElementById('count').value;
+  var hydration = +document.getElementById('hydration').value;
+
+  var flour = flourPerPizza * pizzas;
+
+  var pctYeast = parseFloat(document.getElementById('pctYeast')?.value) || 1.5;
+  var pctSalt = parseFloat(document.getElementById('pctSalt')?.value) || 1;
+  var pctSugar = parseFloat(document.getElementById('pctSugar')?.value) || 1;
+  var pctImprover = parseFloat(document.getElementById('pctImprover')?.value) || 1;
+
+  var water = flour * hydration / 100;
+  var yeast = flour * pctYeast / 100;
+  var salt = flour * pctSalt / 100;
+  var sugar = flour * pctSugar / 100;
+  var improver = flour * pctImprover / 100;
+
+  document.getElementById('result').innerHTML = `
+    <tr><td>Bread flour 🌾</td><td class="num">${fmt(flour)} g</td><td class="num">100%</td></tr>
+    <tr><td>Water 💧</td><td class="num">${fmt(water)} g</td><td class="num">${hydration}%</td></tr>
+    <tr><td>Yeast 🍞</td><td class="num">${fmt(yeast)} g</td><td class="num"><input id="pctYeast" class="pctInput" type="number" step="0.1" value="${pctYeast}"> %</td></tr>
+    <tr><td>Salt 🧂</td><td class="num">${fmt(salt)} g</td><td class="num"><input id="pctSalt" class="pctInput" type="number" step="0.1" value="${pctSalt}"> %</td></tr>
+    <tr><td>Sugar 🍬</td><td class="num">${fmt(sugar)} g</td><td class="num"><input id="pctSugar" class="pctInput" type="number" step="0.1" value="${pctSugar}"> %</td></tr>
+    <tr><td>Bread improver ⚙️</td><td class="num">${fmt(improver)} g</td><td class="num"><input id="pctImprover" class="pctInput" type="number" step="0.1" value="${pctImprover}"> %</td></tr>
+  `;
+
+  var total = flour + water + yeast + salt + sugar + improver;
+  document.getElementById('totalDough').textContent = fmt(total);
+  document.getElementById('perPizzaDough').textContent = pizzas ? fmt(total / pizzas) : 0;
+}
+
+document.addEventListener("keydown", e => {
+  if(e.key === "Enter"){ e.preventDefault(); generate(); }
 });
 
-/* Populate ingredients table immediately on load */
+updateCustomVisibility();
 generate();
 </script>
 
