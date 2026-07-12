@@ -185,12 +185,11 @@ td.num{
   <div class="about">
     <h3>About 🍕</h3>
     <p>
-      This simple calculator helps you work out the ingredients needed to make
-      pizza dough based on dough weight, hydration, and baker’s percentages.
+      This calculator works using baker’s percentages.  
+      All pizza size values refer to the <strong>dry flour weight per pizza</strong>.
     </p>
   </div>
 
-  <!-- Pizza size -->
   <fieldset>
     <legend>Pizza size 🍕</legend>
     <div class="helperText">
@@ -214,7 +213,7 @@ td.num{
 
     <label>
       <input type="radio" name="size" value="240" onchange="updateCustomVisibility()">
-      Extra Large (large rectangle trays) – 240g
+      Extra Large (rectangle baking trays) – 240g
     </label><br>
 
     <label>
@@ -245,9 +244,9 @@ td.num{
   <fieldset>
     <legend>Hydration (%) 💧</legend>
     <div class="rangeRow">
-      <input type="range" id="hydration" min="50" max="100" value="65"
+      <input type="range" id="hydration" min="50" max="100" value="62"
         oninput="hydVal.textContent=this.value+'%'">
-      <span class="value" id="hydVal">65%</span>
+      <span class="value" id="hydVal">62%</span>
     </div>
   </fieldset>
 
@@ -313,24 +312,27 @@ function generate(){
   var pctYeast = parseFloat(document.getElementById('pctYeast')?.value) || 1.5;
   var pctSalt = parseFloat(document.getElementById('pctSalt')?.value) || 1;
   var pctSugar = parseFloat(document.getElementById('pctSugar')?.value) || 1;
+  var pctOil = parseFloat(document.getElementById('pctOil')?.value) || 3;
   var pctImprover = parseFloat(document.getElementById('pctImprover')?.value) || 1;
 
   var water = flour * hydration / 100;
   var yeast = flour * pctYeast / 100;
   var salt = flour * pctSalt / 100;
   var sugar = flour * pctSugar / 100;
+  var oil = flour * pctOil / 100;
   var improver = flour * pctImprover / 100;
 
   document.getElementById('result').innerHTML = `
     <tr><td>Bread flour 🌾</td><td class="num">${fmt(flour)} g</td><td class="num">100%</td></tr>
     <tr><td>Water 💧</td><td class="num">${fmt(water)} g</td><td class="num">${hydration}%</td></tr>
+    <tr><td>Olive oil 🫒</td><td class="num">${fmt(oil)} g</td><td class="num"><input id="pctOil" class="pctInput" type="number" step="0.1" value="${pctOil}"> %</td></tr>
     <tr><td>Yeast 🍞</td><td class="num">${fmt(yeast)} g</td><td class="num"><input id="pctYeast" class="pctInput" type="number" step="0.1" value="${pctYeast}"> %</td></tr>
     <tr><td>Salt 🧂</td><td class="num">${fmt(salt)} g</td><td class="num"><input id="pctSalt" class="pctInput" type="number" step="0.1" value="${pctSalt}"> %</td></tr>
     <tr><td>Sugar 🍬</td><td class="num">${fmt(sugar)} g</td><td class="num"><input id="pctSugar" class="pctInput" type="number" step="0.1" value="${pctSugar}"> %</td></tr>
     <tr><td>Bread improver ⚙️</td><td class="num">${fmt(improver)} g</td><td class="num"><input id="pctImprover" class="pctInput" type="number" step="0.1" value="${pctImprover}"> %</td></tr>
   `;
 
-  var total = flour + water + yeast + salt + sugar + improver;
+  var total = flour + water + yeast + salt + sugar + oil + improver;
   document.getElementById('totalDough').textContent = fmt(total);
   document.getElementById('perPizzaDough').textContent = pizzas ? fmt(total / pizzas) : 0;
 }
